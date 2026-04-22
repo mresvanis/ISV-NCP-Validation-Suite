@@ -25,7 +25,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v8
+        uses: astral-sh/setup-uv@v8.1.0
 
       - name: Bump version in all pyproject.toml files
         run: python3 scripts/bump-version.py "${{ inputs.bump }}" --yes
