@@ -40,15 +40,15 @@ jobs:
         uses: peter-evans/create-pull-request@v8
         with:
           branch: release/v${{ steps.version.outputs.value }}
-          title: "chore(release): v${{ steps.version.outputs.value }}"
+          title: "chore: update package versions to ${{ steps.version.outputs.value }}"
           body: |
             Automated version bump to **v${{ steps.version.outputs.value }}**.
 
             After this PR is merged, run the **Create version tag** workflow with
             `${{ steps.version.outputs.value }}` to push the tag.
           commit-message: |
-            chore(release): bump to v${{ steps.version.outputs.value }}
+            chore: update package versions to ${{ steps.version.outputs.value }}
 
-            Signed-off-by: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+            bump package versions to ${{ steps.version.outputs.value }}
           signoff: true
           delete-branch: true
