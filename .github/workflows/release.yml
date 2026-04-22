@@ -1,0 +1,65 @@
+#
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Builds wheels and creates a GitHub Release when a vX.Y.Z tag is pushed.
+#
+# Escape hatches:
+#   - Disable this workflow in the Actions UI to fall back to manually running
+#     `gh release create` after tag.yml pushes a tag.
+#   - Use workflow_dispatch to re-run on an existing tag if a previous run failed.
+#   - The release is created with --draft initially; a human clicks "Publish".
+#     Once trusted, remove the --draft flag.
+name: Release
+
+on:
+  push:
+    tags:
+      - "v[0-9]*.[0-9]*.[0-9]*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to (re-)release, e.g. v1.2.3"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve tag
+        id: tag
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+          echo "name=$TAG" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.tag.outputs.name }}
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Build wheels and sdists for all workspace packages
+        run: |
+          uv sync
+          uv build --all-packages --out-dir dist/
+          ls -la dist/
+
+      - name: Create draft GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.tag.outputs.name }}" \
+            --title "${{ steps.tag.outputs.name }}" \
+            --generate-notes \
+            --draft \
+            dist/*

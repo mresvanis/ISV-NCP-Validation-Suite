@@ -1,0 +1,55 @@
+#
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+name: Prepare release (bump version PR)
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "patch | minor | major | fix | feat | explicit X.Y.Z"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Bump version in all pyproject.toml files
+        run: python3 scripts/bump-version.py "${{ inputs.bump }}" --yes
+
+      - name: Read resolved version from pyproject.toml
+        id: version
+        run: |
+          VERSION=$(python3 -c "import re,sys; print(re.search(r'^version\s*=\s*\"([^\"]+)\"', open('pyproject.toml').read(), re.M).group(1))")
+          echo "value=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Open PR
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: release/v${{ steps.version.outputs.value }}
+          title: "chore(release): v${{ steps.version.outputs.value }}"
+          body: |
+            Automated version bump to **v${{ steps.version.outputs.value }}**.
+
+            After this PR is merged, run the **Create version tag** workflow with
+            `${{ steps.version.outputs.value }}` to push the tag. The release
+            workflow will then build wheels and create a GitHub Release.
+          commit-message: |
+            chore(release): bump to v${{ steps.version.outputs.value }}
+
+            Signed-off-by: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+          signoff: true
+          delete-branch: true
