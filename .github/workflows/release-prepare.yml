@@ -25,7 +25,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v8
 
       - name: Bump version in all pyproject.toml files
         run: python3 scripts/bump-version.py "${{ inputs.bump }}" --yes
@@ -45,8 +45,7 @@ jobs:
             Automated version bump to **v${{ steps.version.outputs.value }}**.
 
             After this PR is merged, run the **Create version tag** workflow with
-            `${{ steps.version.outputs.value }}` to push the tag. The release
-            workflow will then build wheels and create a GitHub Release.
+            `${{ steps.version.outputs.value }}` to push the tag.
           commit-message: |
             chore(release): bump to v${{ steps.version.outputs.value }}
 
