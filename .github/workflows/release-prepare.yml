@@ -37,7 +37,7 @@ jobs:
           echo "value=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Open PR
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           branch: release/v${{ steps.version.outputs.value }}
           title: "chore(release): v${{ steps.version.outputs.value }}"
