@@ -19,6 +19,7 @@ Usage:
     python scripts/bump-version.py minor          # v0.4.2 -> 0.5.0  (alias: feat)
     python scripts/bump-version.py major          # v0.4.2 -> 1.0.0
     python scripts/bump-version.py 1.2.3          # explicit version
+    python scripts/bump-version.py patch --yes    # skip interactive prompt (for CI)
     python scripts/bump-version.py --check 1.2.3  # verify they already match (for CI)
 """
 
@@ -240,15 +241,25 @@ def main() -> None:
         check(expected)
         return
 
-    if len(sys.argv) != 2 or sys.argv[1].startswith("-"):
-        print(f"usage: {sys.argv[0]} [--check] <version>", file=sys.stderr)
+    args = sys.argv[1:]
+    assume_yes = False
+    if "--yes" in args:
+        assume_yes = True
+        args.remove("--yes")
+
+    if len(args) != 1 or args[0].startswith("-"):
+        print(f"usage: {sys.argv[0]} [--check] <version> [--yes]", file=sys.stderr)
         print("  version: X.Y.Z | patch | minor | major | fix | feat", file=sys.stderr)
         sys.exit(1)
 
-    arg = sys.argv[1]
+    arg = args[0]
     base, base_source = _base_version()
     new_version = _resolve_version(arg, base)
-    _confirm(base, base_source, new_version)
+    if not assume_yes:
+        _confirm(base, base_source, new_version)
+    elif new_version == base:
+        print(f"Already at {base}, nothing to do.")
+        sys.exit(0)
 
     print(f"\nBumping to {new_version}:")
     bump(new_version)
